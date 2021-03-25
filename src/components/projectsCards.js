@@ -11,27 +11,39 @@ const contractAddress = ContractAddresses;
 
 
 function Projects(props){
-    const [ allProjects, setAllProjects ] = useState([]);
+    const [ totalSupply, setTotalSupply ] = useState("");
+    const [ symbol, setSymbol ] = useState("");
+    const [ name, setName ] = useState("");
+    const [ balanceOfOwner,  setBalanceOfOwner ] = useState("");
 
-    async function viewAllProjects(){
+    async function viewtotalSupply(){
         try {
             const lottery = Lottery(web3, contractAddress);    
-            const response = await lottery.methods.viewProjects().call();
-            console.log(response);
-            setAllProjects(response)
+            // console.log(lottery)
+            const totalSupply = await lottery.methods.totalSupply().call();
+            const symbol = await lottery.methods.symbol().call();
+            const name = await lottery.methods.name().call();
+            const managerAddress = await lottery.methods.managerAddress().call();
+            const balanceOf = await lottery.methods.balanceOf(managerAddress).call();
+            
+            // console.log(balanceOf);
+            // console.log(totalSupply);
+            // console.log(symbol);
+            // console.log(name);
+            setBalanceOfOwner(balanceOf)
+            setTotalSupply(totalSupply)
+            setSymbol(symbol)
+            setName(name)
         }
         catch (err) {
             console.log(err);
-        }
-    
+        }    
     }
 
     useEffect(() => {
-        viewAllProjects();
+        viewtotalSupply();
     }, [])
 
-    //   console.log("allProjects")
-    //   console.log(allProjects)
     return(
         <>
         <Row>
@@ -44,32 +56,24 @@ function Projects(props){
             <img src={image2} style={{width: "100%"}} alt=""/>
         </Row>
 
-        <Row>
-        </Row>
             <h1 style={{ backgroundColor: "white", marginBottom: "30px", paddingLeft: "50px", paddingTop: "30px", paddingBottom: "10px"}}>All Projects </h1>
         <div style={{padding: "0px 50px 0px 50px"}}>
             <Row>
-            { 
-                allProjects.map(( item, i) => 
-                    <div className="col-3"> 
-                        <Card key={ i } style={{ width: '18rem' }}>
-                            <Card.Img variant="top" style={{padding: "10px"}} src="https://c4.iggcdn.com/indiegogo-media-prod-cld/image/upload/c_fit,w_auto,g_center,q_auto:best,dpr_1.5,f_auto/plxqhfldvsygocadsn55" />
-                            <Card.Body>
-                                <Card.Title> {item.Name} </Card.Title>
-                                <Card.Text> {item.Description} </Card.Text>
-                                <Card.Text>
-                                    <span style={{color:"gray"}}> { ((item.ReceiveAmount / item.RequiredAmount) * 100).toFixed(0) }% raised </span> 
-                                    <ProgressBar variant="success" now={ ((item.ReceiveAmount / item.RequiredAmount) * 100) } />
-                                </Card.Text>
-                                
-                                <a href={`/contribute-campaign`}>
-                                    <Button variant="info" style={{width: "100%"}}>Click to Fund</Button>
-                                </a>
-                            </Card.Body>
-                        </Card>
-                    </div> 
-                )
-            }
+                <div className="col-3"> 
+                    <Card style={{ width: '18rem' }}>
+                        <Card.Img variant="top" style={{padding: "10px"}} src="https://c4.iggcdn.com/indiegogo-media-prod-cld/image/upload/c_fit,w_auto,g_center,q_auto:best,dpr_1.5,f_auto/plxqhfldvsygocadsn55" />
+                        <Card.Body>
+                            <Card.Title> Name: {name} </Card.Title>
+                            <Card.Text> Symbol: {symbol} </Card.Text>
+                            <Card.Text>
+                                <span style={{color:"gray"}}>  Total Token Supply: <strong>{totalSupply}</strong> </span> 
+                                <br/>
+                                <span style={{color:"gray"}}>  Token Transfered: <strong>{(totalSupply - balanceOfOwner)}</strong> </span> 
+                                <ProgressBar variant="success" now={ (((totalSupply - balanceOfOwner) / totalSupply) * 100) } />
+                            </Card.Text>
+                        </Card.Body>
+                    </Card>
+                </div> 
             </Row>
         </div>
         </>

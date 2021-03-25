@@ -5,63 +5,56 @@ import web3 from '../ethereum/web3Truffle';
 import ContractAddresses from "../ethereum/config/deployedAddress";
 import Lottery from "../ethereum/instance/Lottery";
 import image from "./fund.JPG"
+import Loader from './loader';
 
 const contractAddress = ContractAddresses;
 
-function ContributeCampaign(){
-    const [ selectedCreators, setSelectedCreators ] = useState([]);
-    const [ myAccount, setMyAccount ] = useState("");
-    const [ allProjects, setAllProjects ] = useState([]);
-    const [ txPending, setTxPending ] = useState([]);
-    const [ fund, setFund ] = useState("");
+/**  -----------------------------------------------  **/ 
+/**         Transfer Through Delegate Account         **/ 
+/**  -----------------------------------------------  **/ 
 
-    function contribute(event){
+function ContributeCampaign(){
+    // const [ selectedCreators, setSelectedCreators ] = useState([]);
+    const [ myAccount, setMyAccount ] = useState("");
+    const [ delegateAccount, setDelegateAccount ] = useState();
+    const [ fund, setFund ] = useState("");
+    const [ loading, setLoading ] = useState(false);
+
+    async function contribute(event){
+        event.preventDefault();
         const lottery = Lottery(web3, contractAddress);    
         
-        event.preventDefault();
-        // console.log(event.target.parentElement.firstElementChild.children[1]);
+        const managerAddress = await lottery.methods.managerAddress().call();
 
-
-        // const lottery = Lottery(web3, contractAddress);
-        console.log(myAccount)
-        console.log(selectedCreators);
+        console.clear();
+        console.log(managerAddress)
+        console.log(delegateAccount);
         console.log(fund);
-        alert("Your contribution has been proceeded")
-        lottery.methods.contributeCampain( selectedCreators ).send({
-            from: myAccount,
-            value: fund,
+        console.log(lottery);
+        // setMyAccount("")
+        setDelegateAccount("")
+        setFund("")
+        setLoading(true)
+        lottery.methods.approve( delegateAccount,  fund).send({
+            from: managerAddress,
         }).then( data => {
+            setLoading(false)
             console.log("transaction pendingxg");
             console.log( data );
             alert("Your contribution is in the queue.")
         }).catch( err => {
+            setLoading(false)
             setFund("There is an error in contribution.")
             console.log( err );
         })
-        setFund("Your contribution is in queue.")
     }
-    
-    useEffect(() => {
-        async function fetchAllCreators() {
-            const lottery = Lottery(web3, contractAddress);    
-            const response = await lottery.methods.viewProjects().call();
-            console.log(response);
-            setAllProjects(response)
-        }
-          fetchAllCreators();
-    }, []);
         
-     function change (event){
-         alert(event.target.value)
-         setSelectedCreators(event.target.value);
-    }
-    
     return(
         <>
         <Row>
             <Jumbotron style={{width: "100%", backgroundImage: `url(${image})`}}>
                 <Container>
-                    <h1> Contribute a Campaign</h1>
+                    <h1> Create New Delegate</h1>
                     <p> This is a modified jumbotron that occupies the entire horizontal space of its parent. </p>
                 </Container>
             </Jumbotron>
@@ -69,24 +62,33 @@ function ContributeCampaign(){
         <div style={{padding: "50px"}}>
             <Row  className="mx-auto" style={{ display: "flex", justifyContent: "space-around"}}>
                 <span  className="mx-auto bg-white" style={{ padding: "20px", borderTopRightRadius: "15px", borderBottomLeftRadius: "15px"}}>
-                    <h5> {txPending} </h5>
-                    <h1 style={{ textDecorationLine:"underline" }}> Contribute Form</h1>
+                    <h5>  </h5>
+                    <h1 style={{ textDecorationLine:"underline" }}> Create Delegate</h1>
                 <Form>
-                    <Form.Group>
-                        <Form.Label> Your Account Address</Form.Label>
+                    {/* <Form.Group>
+                        <Form.Label> Owner Account Address</Form.Label>
                         <Form.Control  
-                        // onBlur={ (event) => { 
-                            //     console.log(myAccount);
-                            //     setMyAccount(event.target.value) 
-                            // }}            
                             onPaste={(event)=> 
-                                // handleChange(event)
                                 setMyAccount(event.target.value)
                             }
                             onChange={(event) =>
                                 setMyAccount(event.target.value)
                             }
                             value={myAccount}
+                        />
+                    </Form.Group> */}
+
+
+                    <Form.Group>
+                        <Form.Label> Receiver Account Address</Form.Label>
+                        <Form.Control  
+                            onPaste={(event)=> 
+                                setDelegateAccount(event.target.value)
+                            }
+                            onChange={(event) =>
+                                setDelegateAccount(event.target.value)
+                            }
+                            value={delegateAccount}
                         />
                     </Form.Group>
                     
@@ -95,23 +97,21 @@ function ContributeCampaign(){
                         <Form.Control type="number" value={fund} onChange={ (event) => setFund(event.target.value) } />
                     </Form.Group>
 
-                    <Form.Group controlId="exampleForm.ControlSelect1">
-                        <Form.Label>Example select</Form.Label>
-                        <Form.Control as="select" onChange={change} >
-                            {
-                                 allProjects.map(( item, i) => 
-                                    <option key={i} value={item.Creator}  > { item.Name } </option>
-                                 )
-                            }
-                        </Form.Control>
-                    </Form.Group>
                     <Button variant="primary" type="submit" onClick={contribute} > Fund It !!! </Button>
                 </Form>
                 </span>
             </Row>
         </div>
+
+        <Row>
+        {/* <Loader /> */}
+            {loading ? <Loader /> : "<ResultsTable results={data}"  }
+        </Row>
         </>
     )
 }
 
 export default ContributeCampaign;
+
+
+// 0x820512E3f74D7F34D402F8Ea85d607C24D850881

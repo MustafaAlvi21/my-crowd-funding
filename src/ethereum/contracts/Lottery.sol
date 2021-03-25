@@ -1,60 +1,66 @@
 pragma solidity ^0.8.0;
 
-contract crowedFunding{
+contract DappToken {
+    string  public name = "Crowd Funding";
+    string  public symbol = "CF";
+    string  public standard = "Crowd Funding v1.0";
+    uint256 public totalSupply;
     address public manager;
-    address[] public members;
-    Campain[] listOfProject;
 
-    constructor (){
+    event Transfer(
+        address indexed _from,
+        address indexed _to,
+        uint256 _value
+    );
+
+    event Approval(
+        address indexed _owner,
+        address indexed _spender,
+        uint256 _value
+    );
+
+    mapping(address => uint256) public balanceOf;
+    mapping(address => mapping(address => uint256)) public allowance;
+
+    constructor (uint256 _initialSupply) public {
+        balanceOf[msg.sender] = _initialSupply;
+        totalSupply = _initialSupply;
         manager = msg.sender;
     }
-    
-    struct Campain{
-        address Creator;
-        string Name;
-        string Description;
-        uint256 RequiredAmount;
-        uint256 ReceiveAmount;
+
+    function managerAddress() public view returns(address){
+        return manager;
+    }
+    function transfer(address _to, uint256 _value) public returns (bool success) {
+        require(balanceOf[msg.sender] >= _value);
+
+        balanceOf[msg.sender] -= _value;
+        balanceOf[_to] += _value;
+
+        emit Transfer(msg.sender, _to, _value);
+
+        return true;
     }
 
-    function createProject(string memory Name, string memory Description, uint256 RequiredAmount) public checkCreatorType {
-        RequiredAmount = RequiredAmount * 1 ether;
-        uint256 ReceiveAmount = 0 * 1 ether;
-        Campain memory project = Campain(msg.sender, Name, Description, RequiredAmount, ReceiveAmount);
-        listOfProject.push(project);
-        members.push(msg.sender);
-    }
-    
-    function viewProjects() public view returns(Campain[] memory){
-        return listOfProject;
-    }
-    
-    function viewAllCreators() public view returns(address[] memory){
-        return members;
-    }
-    
-    function contributeCampain(address campainAddress) payable public contribution {
-        for(uint i = 0; i < listOfProject.length; i++){
-            if(listOfProject[i].Creator == campainAddress){
-                require((listOfProject[i].ReceiveAmount + msg.value) * 1 ether <= listOfProject[i].RequiredAmount, "Required amount limit exceeds");
-                payable(listOfProject[i].Creator).transfer(msg.value);
-                listOfProject[i].ReceiveAmount += msg.value;
-            }
-        }
+        function approve(address _spender, uint256 _value) public returns (bool success) {
+        allowance[msg.sender][_spender] = _value;
+
+        Approval(msg.sender, _spender, _value);
+
+        return true;
     }
 
-    
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
+        require(_value <= balanceOf[_from]);
+        require(_value <= allowance[_from][msg.sender]);
 
+        balanceOf[_from] -= _value;
+        balanceOf[_to] += _value;
 
+        allowance[_from][msg.sender] -= _value;
 
-    
-    modifier contribution(){
-        require(msg.value >= 1 ether, "Your contribution must be 1 or more ethers");
-        _;
-    }
-    
-    modifier checkCreatorType(){
-        require(msg.sender != manager, "Manager can not create Campain");
-        _;
+        Transfer(_from, _to, _value);
+
+        return true;
     }
 }
